@@ -4,48 +4,70 @@ import java.io.*;
 import java.net.*;
 
 public class Client {
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         String serverAddress = "localhost";
+
         int port = 3000;
 
-        try (Socket socket = new Socket(serverAddress, port)) {
+        try (    var socket = new Socket(serverAddress, port);
+
+                 var in = new DataInputStream(socket.getInputStream());
+
+                 var out = new DataOutputStream(socket.getOutputStream());
+
+                 var console = new BufferedReader(new InputStreamReader(System.in)))
+        {
             System.out.println("Connected to server.");
 
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
-
+            // Thread to receive messages from the server
             Thread receiveThread = new Thread(() -> {
-                try {
-                    while (true) {
+                try
+                {
+                    while (true)
+                    {
                         String message = in.readUTF();
-                        if (message.equalsIgnoreCase("exit")) {
+
+                        if (message.equalsIgnoreCase("exit"))
+                        {
                             System.out.println("Server disconnected.");
                             break;
                         }
                         System.out.println("Server: " + message);
                     }
-                    socket.close();
-                    System.exit(0);
-                } catch (IOException e) {
+                }
+                catch (IOException e)
+                {
                     System.out.println("Connection closed.");
+                }
+                finally
+                {
+                    System.exit(0);
                 }
             });
 
             receiveThread.start();
 
-            while (true) {
+            // Sending messages to server
+            while (true)
+            {
                 String message = console.readLine();
+
                 out.writeUTF(message);
-                if (message.equalsIgnoreCase("exit")) {
+
+                if (message.equalsIgnoreCase("exit"))
+                {
                     System.out.println("Client disconnecting...");
+
                     socket.close();
-                    System.exit(0);
+
+                    break;
                 }
             }
-
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         }
+
     }
 }
